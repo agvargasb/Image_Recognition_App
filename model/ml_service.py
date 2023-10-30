@@ -4,23 +4,25 @@ import time
 
 import numpy as np
 import redis
-from settings import REDIS_IP, REDIS_PORT, REDIS_DB_ID, REDIS_QUEUE, SERVER_SLEEP
-from tensorflow.keras.applications import resnet50
+import settings
+from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.resnet50 import decode_predictions, preprocess_input
 from tensorflow.keras.preprocessing import image
 
 # TODO
 # Connect to Redis and assign to variable `db``
 # Make use of settings.py module to get Redis settings like host, port, etc.
-db = redis.Redis(host=REDIS_IP, port=REDIS_PORT, db=REDIS_DB_ID, decode_responses=True)
+db = redis.Redis(host=settings.REDIS_IP,
+                 port=settings.REDIS_PORT,
+                 db=settings.REDIS_DB_ID,
+                 decode_responses=True)
 
 # TODO
 # Load your ML model and assign to variable `model`
 # See https://drive.google.com/file/d/1ADuBSE4z2ZVIdn66YDSwxKv-58U7WEOn/view?usp=sharing
 # for more information about how to use this model.
-model = resnet50.ResNet50(include_top=True, weights="imagenet")
-print("Hi! I'm the model!")
-print("I'm ready to go!")
+
+model = ResNet50(include_top=True, weights="imagenet")
 
 def predict(image_name):
     """
@@ -38,11 +40,17 @@ def predict(image_name):
         Model predicted class as a string and the corresponding confidence
         score as a number.
     """
-    class_name = None
-    pred_probability = None
+    if settings.UPLOAD_FOLDER[-1] != "/":
+        settings.UPLOAD_FOLDER += "/"
 
-    # TODO
-    # raise NotImplementedError
+    img = image.load_img(settings.UPLOAD_FOLDER + image_name, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+
+    preds = model.predict(x)
+    class_name = decode_predictions(preds, top=1)[0][0][1]
+    pred_probability = round(decode_predictions(preds, top=1)[0][0][2], 4)
 
     return class_name, pred_probability
 
@@ -75,7 +83,7 @@ def classify_process():
         # TODO
         # raise NotImplementedError
 
-        queue_name, message = db.brpop(REDIS_QUEUE, 0)
+        queue_name, message = db.brpop(settings.REDIS_QUEUE, 0)
         message = message.decode("utf-8")
 
         message_json = json.loads(message)
@@ -87,7 +95,7 @@ def classify_process():
         db.set(redis_id, json.dumps({"prediction": prediction, "score": score}))
 
         # Sleep for a bit
-        time.sleep(SERVER_SLEEP)
+        time.sleep(settings.SERVER_SLEEP)
 
 
 if __name__ == "__main__":
