@@ -13,7 +13,8 @@ USER app
 ENV PYTHONPATH=$PYTHONPATH:/src/
 ENV PATH=$PATH:/home/app/.local/bin/
 
-COPY ./ /src
+# COPY ./ /src
+COPY --chown=app:app ./ /src
 
 WORKDIR /src
 

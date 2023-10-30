@@ -100,6 +100,10 @@ $ cd api/
 $ docker build -t flask_api_test --progress plain --target test .
 ```
 
+```bash
+$ docker build --build-arg UID=1000 --build-arg GID=1000 -t flask_api_test --progress plain --target test .
+```
+
 You will only need to pay attention to the logs corresponding to the testing code which will look like this:
 
 ```bash
@@ -129,6 +133,10 @@ Same as api, run:
 ```bash
 $ cd model/
 $ docker build -t model_test --progress plain --target test .
+```
+
+```bash
+$ docker build --build-arg UID=1000 --build-arg GID=1000 -t model_test --progress plain --target test .
 ```
 
 ### 2. Integration end-to-end
