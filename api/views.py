@@ -150,8 +150,10 @@ def feedback():
     # Store the reported data to a file on the corresponding path
     # already provided in settings.py module (settings.FEEDBACK_FILEPATH)
     # TODO
+    
     if report:
-        raise NotImplementedError
+        with open(settings.FEEDBACK_FILEPATH, "a") as f:
+            f.write(report)
 
     # Don't change this line
     return render_template("index.html")
