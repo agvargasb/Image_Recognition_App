@@ -1,4 +1,5 @@
 version: "3.2"
+
 services:
   api:
     user: ${UID}:${GID}
@@ -20,12 +21,8 @@ services:
       - redis
       - model
     volumes:
-      - ./feedback:/src/feedback
-      - ./uploads:/src/static/uploads
-    # command:
-    #   - chown -R ${UID}:${GID} /home/app/.local/bin/
-    #   - chown -R ${UID}:${GID} /src/feedback
-    #   - chown -R ${UID}:${GID} /src/static/uploads
+      - feedback:/src/feedback
+      - uploads:/src/static/uploads
 
   redis:
     image: redis:6.2.6
@@ -42,6 +39,8 @@ services:
     depends_on:
       - redis
     volumes:
-      - ./uploads:/src/uploads
-    # command:
-    #   - chown -R ${UID}:${GID} /src/uploads
+      - uploads:/src/uploads
+
+volumes:
+  feedback:
+  uploads:
