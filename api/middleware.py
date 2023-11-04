@@ -67,7 +67,7 @@ def model_predict(image_name):
         # Check if the text was correctly processed by our ML model
         # Don't modify the code below, it should work as expected
         if output is not None:
-            output = json.loads(output.decode("utf-8"))
+            output = json.loads(output)
             prediction = output["prediction"]
             score = output["score"]
 

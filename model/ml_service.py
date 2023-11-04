@@ -23,6 +23,7 @@ db = redis.Redis(host=settings.REDIS_IP,
 # for more information about how to use this model.
 
 model = ResNet50(include_top=True, weights="imagenet")
+print("Model loaded!")
 
 def predict(image_name):
     """
@@ -83,16 +84,18 @@ def classify_process():
         # TODO
         # raise NotImplementedError
 
-        queue_name, message = db.brpop(settings.REDIS_QUEUE, 0)
-        message = message.decode("utf-8")
+        message = db.rpop(settings.REDIS_QUEUE)
+        # message = message.decode("utf-8")
+        
+        if message is not None:
+            message_json = json.loads(message)
+            image_name = message_json["image_name"]
 
-        message_json = json.loads(message)
-        image_name = message_json["image_name"]
+            prediction, score = predict(image_name)
+            results = json.dumps({"prediction": prediction, "score": float(score)})
 
-        prediction, score = predict(image_name)
-
-        redis_id = message_json["id"]
-        db.set(redis_id, json.dumps({"prediction": prediction, "score": score}))
+            redis_id = message_json["id"]
+            db.set(redis_id, results)
 
         # Sleep for a bit
         time.sleep(settings.SERVER_SLEEP)
