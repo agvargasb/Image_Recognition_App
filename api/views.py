@@ -153,7 +153,7 @@ def feedback():
     
     if report:
         with open(settings.FEEDBACK_FILEPATH, "a") as f:
-            f.write(report)
+            f.write(report + "\n")
 
     # Don't change this line
     return render_template("index.html")

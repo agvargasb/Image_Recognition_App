@@ -11,7 +11,7 @@ class APIUser(HttpUser):
     
     @task
     def index(self):
-        self.client.get("http://0.0.0.0/")
+        self.client.get("/")
 
     def noise(self):
         with Image(filename="dog.jpeg") as img:
@@ -21,4 +21,8 @@ class APIUser(HttpUser):
     @task
     def predict(self):
         self.noise()
-        self.client.post("http://0.0.0.0/predict", files={"file": ("dog.jpeg", open("dog.jpeg", "rb"), "image/jpeg")})
+        self.client.post("/predict", files={"file": ("dog.jpeg", open("dog.jpeg", "rb"), "image/jpeg")})
+
+    @task
+    def feedback(self):
+        self.client.post("/feedback", data={"report": '{"filename": "filename", "prediction": "wrong_prediction", "score": -1.0}\n'})
