@@ -6,7 +6,7 @@ ARG GID
 # Add a non-root user
 RUN addgroup --gid $GID app
 RUN adduser --disabled-login --geco '' --uid $UID --gid $GID app
-USER app
+# USER app
 
 # Append /home/app/.local/bin/ to PATH variable because
 # gunicorn is installed there.
@@ -20,6 +20,12 @@ ENV PYTHONPATH=$PYTHONPATH:/src/
 
 # COPY ./ /src/
 COPY --chown=app:app ./ /src
+
+RUN mkdir /src/uploads
+
+RUN chown -R app:app /src/uploads
+
+USER app
 
 WORKDIR /src
 

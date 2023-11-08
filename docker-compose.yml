@@ -1,4 +1,5 @@
 version: "3.2"
+name: sprint_3_app
 
 services:
   api:
