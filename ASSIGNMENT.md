@@ -92,6 +92,20 @@ You can easily launch more instances for a particular service using `--scale SER
 
 Write a short report detailing the hardware specs from the server used to run the service and show a comparison in the results obtained for a different number of users being simulated and instances deployed.
 
+### Report
+
+Here are the results of stress tests for different numbers of simulated users (U) and different numbers of instances deployed. The numbers inside are the average execution time in milliseconds for each test (the average is calculated from ten values, approximately).
+
+| Predict Test   | U = 1 | U = 2 | U = 3 | U = 4 |
+|----------------|:-----:|:-----:|:-----:|:-----:|
+| Instances = 1  |  367  |  292  |  265  |  399  |
+| Instances = 2  |  268  |  270  |  276  |  288  |
+
+| Feedback Test | U = 1 | U = 2 | U = 3 | U = 4 |
+|---------------|:-----:|:-----:|:-----:|:-----:|
+| Instances = 1 |  17   |   9   |   8   |   9   |
+| Instances = 2 |   9   |   9   |   9   |  10   |
+
 ## [Optional] Part 3 - Batch processing
 
 Replace the current model behavior to process the jobs in batches. Check if that improves the numbers when doing stress testing.
