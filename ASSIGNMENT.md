@@ -86,6 +86,8 @@ For this task, you must complete the file `locustfile.py` from the `stress_test`
 - `index` endpoint.
 - `predict` endpoint.
 
+You can use the same environment used for integration testing.
+
 ### Test scaled services
 
 You can easily launch more instances for a particular service using `--scale SERVICE=NUM` when running `docker-compose up` command (see [here](https://docs.docker.com/compose/reference/up/)). Scale `model` service to 2 or even more instances and check the performance with locust.
