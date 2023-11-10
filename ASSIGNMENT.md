@@ -1,6 +1,18 @@
 # Sprint project 03: Instructions
 > Flask ML API
 
+## Note: Here the volumes are named volumes.
+
+You can easily manage files in such volumes with Docker Desktop.
+
+### Named volumes and user permissions:
+
+https://stackoverflow.com/questions/64027052/docker-compose-and-named-volume-permission-denied
+
+### Host volumes and user permissions:
+
+https://stackoverflow.com/questions/63993993/docker-persisted-volum-has-no-permissions-apache-solr/64006395#64006395
+
 ## Part 1 - Building the basic service
 
 In this project, we will code and deploy an API for serving our own machine learning models. For this particular case, it will be a Convolutional Neural network for images. You don't need to fully understand how this model works because we will see that in detail later. For now, you can check how to use this model in the notebook [14 - THEORY - CNN Example Extra Material.ipynb](https://drive.google.com/file/d/1ADuBSE4z2ZVIdn66YDSwxKv-58U7WEOn/view?usp=sharing).
@@ -111,3 +123,87 @@ Here are the results of stress tests for different numbers of simulated users (U
 ## [Optional] Part 3 - Batch processing
 
 Replace the current model behavior to process the jobs in batches. Check if that improves the numbers when doing stress testing.
+
+### Code
+
+```python
+def predict(messages_json):
+    """
+    Returns the predicted class and confidence score for each image filename in
+    `messages_json`. The final format can be passed directly to Redis.
+
+    Parameters
+    ----------
+    messages_json : list(dict)
+        Image filenames with their corresponding IDs.
+
+    Returns
+    -------
+    results_with_ids : dict
+        Model predicted class and confidence score for each ID.
+    """
+    if settings.UPLOAD_FOLDER[-1] != "/":
+        settings.UPLOAD_FOLDER += "/"
+
+    image_names = [message_json["image_name"] for message_json in messages_json]
+    ids = [message_json["id"] for message_json in messages_json]
+    images = []
+
+    for image_name in image_names:
+        img = image.load_img(settings.UPLOAD_FOLDER + image_name, target_size=(224, 224))
+        x = image.img_to_array(img)
+        images.append(x)
+    
+    images = preprocess_input(np.array(images))
+    preds = model.predict(images, batch_size=6)
+    classes = decode_predictions(preds, top=1)
+
+    results_with_ids = {}
+    index = 0
+
+    for img_class in classes:
+        results = {"prediction": img_class[0][1], "score": round(img_class[0][2], 4).item()}
+        results_with_ids[str(ids[index])] = json.dumps(results)
+        index += 1
+    
+    return results_with_ids
+
+def classify_process():
+    """
+    Loop indefinitely, asking Redis for new jobs.
+    When a new job list arrives, the jobs are removed from the Redis queue and
+    their corresponding images are classified using the `predict` function. The
+    results are sent back to Redis with the original job ID so that other services
+    can identify them.
+    """
+    while True:
+        messages = db.rpop(settings.REDIS_QUEUE, 12)
+        
+        if messages is not None:
+            messages_json = [json.loads(message) for message in messages]
+
+            results_with_ids = predict(messages_json)
+
+            db.mset(results_with_ids)
+
+        # Sleep for a bit
+        time.sleep(settings.SERVER_SLEEP)
+```
+
+For batch processing it is necessary to use the code above, it must replace the `model/ml_service.py` functions (in this case this different structure will fail some tests). Note that the batch_size is set to 6 and that 'classify_process' can remove up to 12 keys from Redis at once. These values can of course be higher. The table below shows the results of batch processing:
+
+
+| Predict Test   | U = 1 | U = 2 | U = 3 | U = 4 |
+|----------------|:-----:|:-----:|:-----:|:-----:|
+| Instances = 1  |  281  |  263  |  294  |  279  |
+| Instances = 2  |  277  |  283  |  252  |  295  |
+
+| Feedback Test | U = 1 | U = 2 | U = 3 | U = 4 |
+|---------------|:-----:|:-----:|:-----:|:-----:|
+| Instances = 1 |  11   |   9   |   9   |  17   |
+| Instances = 2 |  10   |   8   |   8   |  14   |
+
+
+
+The numbers are not very different compared to the previous ones. I think is necessary to have a very big images dataset for the locust tests,
+because in these tests, even with the gaussian noise implementation of `stress_test/locust.py', it can happen that two or more get requests try to upload the same image, causing a certain number of requests to fail to upload images and be counted as successful at the same time. Also, with a large number of different images, different values for batch_size can be tested.

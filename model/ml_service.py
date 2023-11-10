@@ -25,6 +25,72 @@ db = redis.Redis(host=settings.REDIS_IP,
 model = ResNet50(include_top=True, weights="imagenet")
 print("Model loaded!")
 
+# THE FOLLOWING COMMENTED CODE IS USED FOR DELIVER RESULTS WITH BATCH PROCESSING.
+
+
+# def predict(messages_json):
+#     """
+#     Returns the predicted class and confidence score for each image filename in
+#     `messages_json`. The final format can be passed directly to Redis.
+
+#     Parameters
+#     ----------
+#     messages_json : list(dict)
+#         Image filenames with their corresponding IDs.
+
+#     Returns
+#     -------
+#     results_with_ids : dict
+#         Model predicted class and confidence score for each ID.
+#     """
+#     if settings.UPLOAD_FOLDER[-1] != "/":
+#         settings.UPLOAD_FOLDER += "/"
+
+#     image_names = [message_json["image_name"] for message_json in messages_json]
+#     ids = [message_json["id"] for message_json in messages_json]
+#     images = []
+
+#     for image_name in image_names:
+#         img = image.load_img(settings.UPLOAD_FOLDER + image_name, target_size=(224, 224))
+#         x = image.img_to_array(img)
+#         images.append(x)
+    
+#     images = preprocess_input(np.array(images))
+#     preds = model.predict(images, batch_size=6)
+#     classes = decode_predictions(preds, top=1)
+
+#     results_with_ids = {}
+#     index = 0
+
+#     for img_class in classes:
+#         results = {"prediction": img_class[0][1], "score": round(img_class[0][2], 4).item()}
+#         results_with_ids[str(ids[index])] = json.dumps(results)
+#         index += 1
+    
+#     return results_with_ids
+
+# def classify_process():
+#     """
+#     Loop indefinitely, asking Redis for new jobs.
+#     When a new job list arrives, the jobs are removed from the Redis queue and
+#     their corresponding images are classified using the `predict` function. The
+#     results are sent back to Redis with the original job ID so that other services
+#     can identify them.
+#     """
+#     while True:
+#         messages = db.rpop(settings.REDIS_QUEUE, 12)
+        
+#         if messages is not None:
+#             messages_json = [json.loads(message) for message in messages]
+
+#             results_with_ids = predict(messages_json)
+
+#             db.mset(results_with_ids)
+
+#         # Sleep for a bit
+#         time.sleep(settings.SERVER_SLEEP)
+
+
 def predict(image_name):
     """
     Load image from the corresponding folder based on the image name
@@ -51,7 +117,7 @@ def predict(image_name):
 
     preds = model.predict(x)
     class_name = decode_predictions(preds, top=1)[0][0][1]
-    pred_probability = round(decode_predictions(preds, top=1)[0][0][2], 4)
+    pred_probability = round(decode_predictions(preds, top=1)[0][0][2], 4).item()
 
     return class_name, pred_probability
 
@@ -92,7 +158,7 @@ def classify_process():
             image_name = message_json["image_name"]
 
             prediction, score = predict(image_name)
-            results = json.dumps({"prediction": prediction, "score": float(score)})
+            results = json.dumps({"prediction": prediction, "score": score})
 
             redis_id = message_json["id"]
             db.set(redis_id, results)
