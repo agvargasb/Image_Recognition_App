@@ -72,6 +72,8 @@ instance/
 # Scrapy stuff:
 .scrapy
 
+# Solution developed by Sagrav Sérdna (Nov 10 2023).
+
 # Sphinx documentation
 docs/_build/
 
