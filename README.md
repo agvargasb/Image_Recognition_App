@@ -97,12 +97,9 @@ Run:
 
 ```bash
 $ cd api/
-$ docker build -t flask_api_test --progress plain --target test .
-```
-
-```bash
 $ docker build --build-arg UID=1000 --build-arg GID=1000 -t flask_api_test --progress plain --target test .
 ```
+If the tests are not starting, use the flag --no-cache.
 
 You will only need to pay attention to the logs corresponding to the testing code which will look like this:
 
@@ -132,12 +129,9 @@ Same as api, run:
 
 ```bash
 $ cd model/
-$ docker build -t model_test --progress plain --target test .
-```
-
-```bash
 $ docker build --build-arg UID=1000 --build-arg GID=1000 -t model_test --progress plain --target test .
 ```
+If the tests are not starting, use the flag --no-cache.
 
 ### 2. Integration end-to-end
 
